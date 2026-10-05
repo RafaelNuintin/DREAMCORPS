@@ -1,31 +1,31 @@
 import pygame
+import sys
+from tilemap import Tilemap
+from levels import LEVEL_1_BACKGROUND, LEVEL_1_OBJECTS
 
 pygame.init()
-
-tamanhoTela = [600, 400]
-
-tela = pygame.display.set_mode(tamanhoTela)
-
+SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("DREAMCORPS")
+clock = pygame.time.Clock()
 
-relogio = pygame.time.Clock()
+# Carrega o tileset e inicializa o sistema
+tilemap = Tilemap("assets/tileset.png")
 
-corFundo = (25,25,112)
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-cenaAtual = 'menu'
+    screen.fill((10, 10, 15)) # Cor de fundo da tela
 
-
-while True:
-
-    for e in pygame.event.get():
-
-        if e.type == pygame.QUIT:
-
-            pygame.quit()
-            exit()
-
-    tela.fill(corFundo)
-
-    relogio.tick(60)
+    # Desenha as camadas (Chão primeiro, Objetos depois)
+    tilemap.draw(screen, LEVEL_1_BACKGROUND)
+    tilemap.draw(screen, LEVEL_1_OBJECTS)
 
     pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
+sys.exit()
