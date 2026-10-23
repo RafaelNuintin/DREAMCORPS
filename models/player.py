@@ -3,13 +3,20 @@ import pygame
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, spritesheet_path):
         super().__init__()
-        self.tile_size = 57
+        # Dimensões originais de corte no Spritesheet
+        self.crop_width = 90
+        self.crop_height = 125
+        
+        # Dimensões finais desejadas na tela (mantém a proporção próxima de 32x32)
+        self.target_width = 48
+        self.target_height = 66
+
         self.spritesheet = pygame.image.load(spritesheet_path).convert_alpha()
         
-        # Mapeamento dos frames (coluna, linha) extraídos do spritesheet 32x32
+        # Mapeamento dos frames (coluna, linha) extraídos e redimensionados
         self.animations = {
-            'down': [self._get_sprite(0, 0), self._get_sprite(1, 0), self._get_sprite(2, 0)],
-            'up':   [self._get_sprite(3, 0), self._get_sprite(4, 0), self._get_sprite(5, 0)],
+            'down':  [self._get_sprite(0, 0), self._get_sprite(0, 2), self._get_sprite(2, 0)],
+            'up':    [self._get_sprite(3, 0), self._get_sprite(4, 0), self._get_sprite(5, 0)],
             'right': [self._get_sprite(0, 1), self._get_sprite(1, 1), self._get_sprite(2, 1)],
             'left':  [pygame.transform.flip(s, True, False) for s in [self._get_sprite(0, 1), self._get_sprite(1, 1), self._get_sprite(2, 1)]]
         }
@@ -22,14 +29,18 @@ class Player(pygame.sprite.Sprite):
         self.image = self.animations[self.direction][0]
         self.rect = self.image.get_rect(topleft=(x, y))
         
-        # Hitbox nos pés (24x16 px) para colisão precisa e profundidade visual
-        self.hitbox = pygame.Rect(x + 4, y + 16, 24, 16)
+        # Hitbox ajustada para a base dos pés do personagem redimensionado (24x12 px)
+        # Posicionada no rodapé da imagem de 32x44 px (offset de +4px na largura e +28px na altura)
+        self.hitbox = pygame.Rect(x + 4, y + 28, 24, 12)
         self.speed = 2.5
 
     def _get_sprite(self, col, row):
-        """Recorta um frame de 32x32 pixels do spritesheet."""
-        rect = pygame.Rect(col * self.tile_size, row * self.tile_size, self.tile_size, self.tile_size)
-        return self.spritesheet.subsurface(rect)
+        """Recorta da imagem original (90x125) e redimensiona para a escala final (32x44)."""
+        rect = pygame.Rect(col * self.crop_width, row * self.crop_height, self.crop_width, self.crop_height)
+        subsurface = self.spritesheet.subsurface(rect)
+        
+        # Redimensiona mantendo nitidez de pixel art
+        return pygame.transform.scale(subsurface, (self.target_width, self.target_height))
 
     def handle_input(self):
         """Lê os comandos de teclado e calcula o vetor de velocidade."""
@@ -50,7 +61,6 @@ class Player(pygame.sprite.Sprite):
             dy += 1
             self.direction = 'down'
 
-        # Normaliza o vetor para manter a velocidade constante na diagonal
         if dx != 0 and dy != 0:
             dx *= 0.7071
             dy *= 0.7071
@@ -65,33 +75,33 @@ class Player(pygame.sprite.Sprite):
             if self.frame_index >= len(self.animations[self.direction]):
                 self.frame_index = 0.0
         else:
-            self.frame_index = 0.0  # Retorna ao frame idle (parado)
+            self.frame_index = 0.0
 
         self.image = self.animations[self.direction][int(self.frame_index)]
 
     def move_and_collide(self, dx, dy, colliders):
-        """Aplica o movimento e resolve as colisões com os caixas do cenário."""
+        """Aplica o movimento e resolve as colisões com as caixas do cenário."""
         # Colisão no Eixo X
         self.hitbox.x += dx
         for collider in colliders:
             if self.hitbox.colliderect(collider):
-                if dx > 0:  # Movendo para a direita
+                if dx > 0:
                     self.hitbox.right = collider.left
-                elif dx < 0:  # Movendo para a esquerda
+                elif dx < 0:
                     self.hitbox.left = collider.right
 
         # Colisão no Eixo Y
         self.hitbox.y += dy
         for collider in colliders:
             if self.hitbox.colliderect(collider):
-                if dy > 0:  # Movendo para baixo
+                if dy > 0:
                     self.hitbox.bottom = collider.top
-                elif dy < 0:  # Movendo para cima
+                elif dy < 0:
                     self.hitbox.top = collider.bottom
 
-        # Sincroniza o rect visual com a posição da hitbox ajustada
+        # Sincroniza o rect visual do sprite com a posição da hitbox
         self.rect.x = self.hitbox.x - 4
-        self.rect.y = self.hitbox.y - 16
+        self.rect.y = self.hitbox.y - 28
 
     def update(self, colliders):
         """Método de atualização executado a cada frame."""
