@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DREAMCORPS.™ - Participant Evaluation System</title>
+    <style>
+        :root {
+            --bg-color: #0a0c16;
+            --panel-bg: rgba(16, 21, 38, 0.85);
+            --border-color: #2b3a58;
+            --accent-cyan: #5ce1e6;
+            --accent-gold: #ffbe3b;
+            --accent-coral: #ff5e62;
+            --accent-purple: #9d4edd;
+            --text-main: #e2e8f0;
+            --text-dim: #8899b5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 30px 20px;
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(35, 25, 60, 0.6), transparent 70%),
+                linear-gradient(rgba(10, 12, 22, 0.95), rgba(10, 12, 22, 0.95));
+        }
+
+        /* Scanlines Overlay */
+        body::before {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header Corporativo */
+        header {
+            border: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            padding: 24px 30px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Lua Crescente Corporativa */
+        .moon-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffe066 10%, #ff6b35 60%, #e63946 100%);
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .moon-logo::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-color);
+        }
+
+        .title-area h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(92, 225, 230, 0.3);
+        }
+
+        .title-area p {
+            font-size: 13px;
+            color: var(--accent-gold);
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .system-meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .status-online {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        /* Grid de Estatísticas Rápidas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 16px 20px;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            color: var(--accent-cyan);
+            font-weight: bold;
+            margin-top: 6px;
+        }
+
+        /* Tabela de Classificação */
+        .ranking-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-header {
+            padding: 16px 24px;
+            background: rgba(20, 26, 48, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 15px;
+            letter-spacing: 1.5px;
+            color: var(--text-main);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: rgba(13, 17, 32, 0.8);
+            color: var(--text-dim);
+            padding: 14px 18px;
+            font-weight: normal;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(43, 58, 88, 0.4);
+            color: var(--text-main);
+        }
+
+        tr:hover {
+            background: rgba(35, 48, 80, 0.3);
+        }
+
+        .rank-badge {
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .player-badge {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .dsi-score {
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        /* Status Tags */
+        .status-tag {
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+
+        .status-ACCEPTABLE {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.4);
+        }
+
+        .status-UNSTABLE {
+            background: rgba(255, 190, 59, 0.15);
+            color: #ffbe3b;
+            border: 1px solid rgba(255, 190, 59, 0.4);
+        }
+
+        .status-REQUIRES-REVIEW, .status-REQUIRES_REVIEW {
+            background: rgba(255, 94, 98, 0.2);
+            color: #ff5e62;
+            border: 1px solid rgba(255, 94, 98, 0.5);
+            animation: pulse-warn 1.5s infinite;
+        }
+
+        .status-INTEGRATED {
+            background: rgba(157, 78, 221, 0.2);
+            color: #c77dff;
+            border: 1px solid rgba(157, 78, 221, 0.5);
+        }
+
+        @keyframes pulse-warn {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Corporativo -->
+        <header>
+            <div class="brand-section">
+                <div class="moon-logo"></div>
+                <div class="title-area">
+                    <h1>DREAMCORPS.™</h1>
+                    <p>“Your dreams. Better than reality.”</p>
+                </div>
+            </div>
+            <div class="system-meta">
+                <div>SYSTEM: <span class="status-online">SOMNUS EVALUATION NET</span></div>
+                <div>TERMINAL: CORE-EVAL-01</div>
+                <div>SECURITY LEVEL: RESTRICTED</div>
+            </div>
+        </header>
+
+        <!-- Métricas Rápidas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Sessões Monitoradas</div>
+                <div class="stat-value">{{ total_sessions }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Média DSI (Estabilidade)</div>
+                <div class="stat-value">{{ avg_dsi }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Instâncias Integradas</div>
+                <div class="stat-value">{{ integrated_count }}</div>
+            </div>
+        </div>
+
+        <!-- Tabela de Avaliação de Participantes -->
+        <div class="ranking-panel">
+            <div class="panel-header">
+                <h2>PARTICIPANT EVALUATION RECORDS // DREAM LAYER</h2>
+                <span style="font-size: 11px; color: var(--accent-cyan);">AUTO-UPDATE ACTIVE</span>
+            </div>
+
+            {% if sessions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>DSI (Estabilidade)</th>
+                        <th>Fase Concluída</th>
+                        <th>Artefatos</th>
+                        <th>Corrupção</th>
+                        <th>Encontros</th>
+                        <th>Tempo</th>
+                        <th>Status Corporativo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sessions %}
+                    <tr>
+                        <td class="rank-badge">{{ forloop.counter }}</td>
+                        <td class="player-badge">{{ s.player_name }}</td>
+                        <td class="dsi-score">{{ s.dsi }}</td>
+                        <td>{{ s.phase_reached }}</td>
+                        <td>{{ s.artifacts_collected }}/5</td>
+                        <td>{{ s.corruption_level }}%</td>
+                        <td>{{ s.entity_encounters }}</td>
+                        <td>{{ s.play_time_seconds }}s</td>
+                        <td>
+                            <span class="status-tag status-{{ s.participant_status|slugify|upper }}">
+                                {{ s.participant_status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                Nenhum registro de conexão neural registrado no banco de dados ainda.<br>
+                Execute o cliente do jogo para registrar a primeira sessão na Dream Layer.
+            </div>
+            {% endif %}
+        </div>
+
+        <footer>
+            DREAMCORPS™ CORPORATION &copy; 2026. ALL RIGHTS RESERVED.<br>
+            CONFIDENTIAL EVALUATION RECORD. UNAUTHORIZED ACCESS SUBJECT TO NEURAL TERMINATION.
+        </footer>
+    </div>
+
+    <script>
+        // Atualiza a página automaticamente a cada 10 segundos caso novas partidas sejam enviadas
+        setTimeout(() => {
+            window.location.reload();
+        }, 10000);
+    </script>
+</body>
+</html>
