@@ -46,6 +46,28 @@ class StageManager:
     def get_current_stage(self):
         return self.current_stage
 
+    def reset(self):
+        """Reinicia todas as fases, artefatos e o progresso para uma nova sessão."""
+        self.stages = [
+            Stage1Bedroom(sw=self.sw, sh=self.sh),
+            Stage2School(sw=self.sw, sh=self.sh),
+            Stage3Office(sw=self.sw, sh=self.sh),
+            Stage4Null(sw=self.sw, sh=self.sh),
+            Stage5Reality(sw=self.sw, sh=self.sh)
+        ]
+        self.current_index = 0
+        self.current_stage = self.stages[self.current_index]
+        self.transitioning = False
+        self.transition_timer = 0.0
+        self.transition_fade = 0.0
+        self.transition_state = 'NONE'
+        self.target_stage_index = 0
+        self.notification_text = ""
+        self.notification_timer = 0.0
+        self.banner_timer = 3.5
+        self.game_completed = False
+        self.artifacts_collected_count = 0
+
     def trigger_stage_change(self, target_index):
         """Inicia a transição suave para uma nova fase."""
         if self.transitioning or target_index >= len(self.stages):
@@ -75,7 +97,7 @@ class StageManager:
 
     def update(self, dt, player):
         """Atualiza a lógica da fase ativa e transições."""
-        self.current_stage.update(dt)
+        self.current_stage.update(dt, player.rect)
 
         # Redução do timer de notificação
         if self.notification_timer > 0:

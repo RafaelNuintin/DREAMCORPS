@@ -31,8 +31,10 @@ class Level1:
         self.colliders.append(pygame.Rect(int(sw * 0.61), int(sh * 0.59), int(sw * 0.03), int(sh * 0.30))) # Parede Vertical Direita
         self.colliders.append(pygame.Rect(int(sw * 0.36), int(sh * 0.25), int(sw * 0.11), int(sh * 0.08)))
         self.colliders.append(pygame.Rect(int(sw * 0.52), int(sh * 0.25), int(sw * 0.11), int(sh * 0.08))) # Parede Horizontal Meio
-        self.colliders.append(pygame.Rect(0, int(sh * 0.39), int(sw * 0.38), int(sh * 0.08))) # Parede Horizontal Esquerda
-        self.colliders.append(pygame.Rect(int(sw * 0.61), int(sh * 0.39), int(sw * 0.38), int(sh * 0.08))) # Parede Horizontal Esquerda
+        self.colliders.append(pygame.Rect(0, int(sh * 0.39), int(sw * 0.38), int(sh * 0.08)))
+        self.colliders.append(pygame.Rect(0, int(sh * 0.45), int(sw * 0.38), int(sh * 0.08))) # Parede Horizontal Esquerda
+        self.colliders.append(pygame.Rect(int(sw * 0.61), int(sh * 0.39), int(sw * 0.38), int(sh * 0.08)))
+        self.colliders.append(pygame.Rect(int(sw * 0.61), int(sh * 0.45), int(sw * 0.38), int(sh * 0.08))) # Parede Horizontal Direita
 
         # Colisões dos móveis do Quarto do Protagonista (Canto Superior Direito)
      #   self.colliders.append(pygame.Rect(int(sw * 0.85), int(sh * 0.14), int(sw * 0.10), int(sh * 0.22))) # Cama

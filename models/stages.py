@@ -2,6 +2,7 @@ import pygame
 import math
 import random
 from models.artifacts import Artifact
+from models.entities import Watcher, Mimic, Predator, TheOther
 
 class Stage:
     """Classe base para cada uma das 5 fases da Dream Layer."""
@@ -14,6 +15,7 @@ class Stage:
         
         self.colliders = []
         self.artifacts = []
+        self.entities = []
         self.exit_rect = None
         self.exit_open = False
         self.player_spawn = (100, 100)
@@ -24,10 +26,14 @@ class Stage:
         self.font = pygame.font.SysFont(["consolas", "couriernew"], 13, bold=True)
         self.banner_font = pygame.font.SysFont(["consolas", "couriernew"], 18, bold=True)
 
-    def update(self, dt):
+    def update(self, dt, player_rect=None):
         self.time += dt
         for art in self.artifacts:
             art.update(dt)
+
+        if player_rect:
+            for ent in self.entities:
+                ent.update(dt, player_rect, self.colliders)
 
         # A saída se abre assim que todos os artefatos da fase são coletados
         if not self.exit_open:
@@ -46,6 +52,10 @@ class Stage:
         # Desenha a saída/portal
         if self.exit_rect:
             self._draw_exit(surface)
+
+        # Desenha entidades da fase
+        for ent in self.entities:
+            ent.draw(surface, debug=debug)
 
         # Desenha artefatos
         for art in self.artifacts:
@@ -137,6 +147,20 @@ class Stage2School(Stage):
         # Saída: Porta vermelha / Elevador de serviço no canto inferior direito
         self.exit_rect = pygame.Rect(700, 480, 60, 50)
 
+        # Entidades da Fase II (GDD Seções 1.3 e 3):
+        # 1. Type B Mimic: Ursinho de pelúcia da infância na entrada da sala
+        self.entities.append(Mimic(120, 240, disguise="BEAR", name="MIMIC_BEAR"))
+        # 2. Type C Predator: "O Professor" patrulhando entre as carteiras
+        self.entities.append(
+            Predator(
+                340, 360,
+                waypoints=[(340, 360), (340, 480), (580, 480), (580, 360)],
+                name="PREDATOR_PROFESSOR",
+                speed=1.6,
+                chase_speed=2.7
+            )
+        )
+
     def _build_scenery(self):
         # Chão: Azulejos quadriculados Weirdcore (rosa suave e creme)
         tile = 40
@@ -213,6 +237,20 @@ class Stage3Office(Stage):
         # Saída: Porta restrita de alta segurança
         self.exit_rect = pygame.Rect(720, 260, 50, 65)
 
+        # Entidades da Fase III (GDD Seção 1.3):
+        # Type A: Watcher na recepção corporativa observando o participante
+        self.entities.append(Watcher(180, 140, name="WATCHER_OFFICE", detection_radius=120))
+        # Type C: Vigilante/Predador patrulhando os cubículos
+        self.entities.append(
+            Predator(
+                550, 320,
+                waypoints=[(550, 320), (550, 480), (320, 480), (320, 320)],
+                name="PREDATOR_SECURITY",
+                speed=1.5,
+                chase_speed=2.6
+            )
+        )
+
     def _build_scenery(self):
         # Chão: Azulejo Frutiger Aero / Carpete Corporativo Azul Petróleo
         for y in range(0, self.sh, 32):
@@ -288,6 +326,20 @@ class Stage4Null(Stage):
 
         # Saída: O Espelho / Portal Dimensional para a Realidade
         self.exit_rect = pygame.Rect(690, 270, 50, 70)
+
+        # Entidades da Fase IV (GDD Seções 1.3 e 3: "The Null"):
+        # 1. Type Ø: THE OTHER perseguindo/perseguido pelo espelho
+        self.entities.append(TheOther(300, 200, name="THE_OTHER_SHADOW"))
+        # 2. Type C: Predador corrompido em alta frequência
+        self.entities.append(
+            Predator(
+                550, 260,
+                waypoints=[(550, 260), (550, 420), (250, 420), (250, 260)],
+                name="PREDATOR_CORRUPTED",
+                speed=2.0,
+                chase_speed=3.2
+            )
+        )
 
     def _build_scenery(self):
         # Fundo do Vazio Negro Estrelado
@@ -376,6 +428,9 @@ class Stage5Reality(Stage):
             Artifact(550, 200, "reality_anchor", "SEGUNDA CÁPSULA DREAMSYNC™", 
                      "Uma nova cápsula idêntica aguarda sobre a escrivaninha.", color=(100, 240, 255), prompt="[E] Acordar / Integrar")
         )
+
+        # Entidade da Fase V (GDD Seção 1.3 & 3: "Outro personagem está presente. É o próprio protagonista"):
+        self.entities.append(TheOther(460, 260, name="THE_OTHER_AWAKE"))
 
         # Não há saída tradicional; coletar a cápsula encerra a sessão com sucesso!
         self.exit_rect = None

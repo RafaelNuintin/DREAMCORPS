@@ -17,14 +17,16 @@ class Menu:
         # Itens do Menu
         self.options = [
             "ACESSAR DREAM LAYER",
+            "AVALIAÇÃO DE PARTICIPANTES (RANKING)",
             "REGISTROS CONFIDENCIAIS",
             "ENCERRAR PROTOCOLO"
         ]
         self.selected_index = 0
 
         # Estados internos do menu
-        # 'MAIN', 'RECORDS', 'TRANSITION'
+        # 'MAIN', 'RANKING', 'RECORDS', 'TRANSITION'
         self.state = 'MAIN'
+        self.ranking_data = []
 
         # Efeitos de animação e tempo
         self.time = 0.0
@@ -124,8 +126,8 @@ class Menu:
             elif event.type == pygame.MOUSEMOTION:
                 # Hover nas opções
                 mx, my = event.pos
-                base_y = self.sh * 0.58
-                spacing = 46
+                base_y = self.sh * 0.54
+                spacing = 42
                 for i in range(len(self.options)):
                     opt_rect = pygame.Rect(self.sw // 2 - 180, int(base_y + i * spacing) - 8, 360, 36)
                     if opt_rect.collidepoint(mx, my):
@@ -133,14 +135,14 @@ class Menu:
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
-                base_y = self.sh * 0.58
-                spacing = 46
+                base_y = self.sh * 0.54
+                spacing = 42
                 for i in range(len(self.options)):
                     opt_rect = pygame.Rect(self.sw // 2 - 180, int(base_y + i * spacing) - 8, 360, 36)
                     if opt_rect.collidepoint(mx, my):
                         self._activate_option(i)
 
-        elif self.state == 'RECORDS':
+        elif self.state in ('RECORDS', 'RANKING'):
             if event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
                 # Qualquer tecla ou clique volta ao menu principal
                 self.state = 'MAIN'
@@ -156,9 +158,14 @@ class Menu:
             self.state = 'TRANSITION'
             self.transition_timer = 0.0
         elif index == 1:
+            # AVALIAÇÃO DE PARTICIPANTES (RANKING)
+            from models.network import fetch_ranking_direct
+            self.ranking_data = fetch_ranking_direct()
+            self.state = 'RANKING'
+        elif index == 2:
             # REGISTROS CONFIDENCIAIS
             self.state = 'RECORDS'
-        elif index == 2:
+        elif index == 3:
             # SAIR
             pygame.event.post(pygame.event.Event(pygame.QUIT))
 
@@ -208,6 +215,8 @@ class Menu:
 
         if self.state == 'MAIN':
             self._draw_main_menu(surface)
+        elif self.state == 'RANKING':
+            self._draw_ranking(surface)
         elif self.state == 'RECORDS':
             self._draw_records(surface)
         elif self.state == 'TRANSITION':
@@ -300,8 +309,8 @@ class Menu:
         pygame.draw.line(surface, (100, 140, 190), (self.sw // 2 - line_w // 2, line_y), (self.sw // 2 + line_w // 2, line_y), 1)
 
         # Opções do Menu
-        base_y = self.sh * 0.58
-        spacing = 46
+        base_y = self.sh * 0.54
+        spacing = 42
 
         for i, option in enumerate(self.options):
             is_selected = (i == self.selected_index)
@@ -402,6 +411,102 @@ class Menu:
         back_hint = "[ Pressione qualquer tecla ou clique para voltar ]"
         back_surf = self.ui_font.render(back_hint, True, (130, 190, 255))
         surface.blit(back_surf, (self.sw // 2 - back_surf.get_width() // 2, card_rect.bottom - 42))
+
+    def _draw_ranking(self, surface):
+        """
+        GDD Seção 7.2:
+        DREAMCORPS.™ PARTICIPANT EVALUATION SYSTEM
+        Apresenta os registros de partidas dos participantes salvos no SQLite do Django.
+        """
+        # Painel central da tela de ranking
+        card_w, card_h = int(self.sw * 0.90), int(self.sh * 0.84)
+        card_rect = pygame.Rect(self.sw // 2 - card_w // 2, self.sh // 2 - card_h // 2, card_w, card_h)
+
+        # Fundo semitransparente escuro
+        card_bg = pygame.Surface((card_w, card_h), pygame.SRCALPHA)
+        card_bg.fill((8, 12, 26, 238))
+        surface.blit(card_bg, card_rect.topleft)
+
+        # Borda dupla azul corporativa com cantos detalhados
+        pygame.draw.rect(surface, (70, 125, 195), card_rect, 2, border_radius=4)
+        pygame.draw.rect(surface, (30, 55, 95), (card_rect.x + 4, card_rect.y + 4, card_w - 8, card_h - 8), 1, border_radius=2)
+
+        # Cabeçalho corporativo
+        tag_surf = self.small_font.render("DREAMCORPS.™ CENTRAL DATABASE // PARTICIPANT EVALUATION SYSTEM", True, (255, 185, 70))
+        surface.blit(tag_surf, (card_rect.x + 28, card_rect.y + 20))
+
+        title_surf = self.ui_font.render("ÍNDICE DE ESTABILIDADE ONÍRICA (DSI) - CLASSIFICAÇÃO GERAL", True, (245, 248, 255))
+        surface.blit(title_surf, (card_rect.x + 28, card_rect.y + 42))
+
+        pygame.draw.line(surface, (60, 95, 150), (card_rect.x + 28, card_rect.y + 74), (card_rect.right - 28, card_rect.y + 74), 1)
+
+        # Cabeçalho da Tabela
+        headers = ["POS", "PARTICIPANTE", "DSI SCORE", "FASE ALCANÇADA", "CORR.", "ANOMALIAS", "TEMPO", "STATUS"]
+        col_x = [card_rect.x + 30, card_rect.x + 85, card_rect.x + 215, card_rect.x + 315, card_rect.x + 475, card_rect.x + 535, card_rect.x + 605, card_rect.x + 655]
+
+        for h_text, h_pos in zip(headers, col_x):
+            h_surf = self.small_font.render(h_text, True, (140, 175, 215))
+            surface.blit(h_surf, (h_pos, card_rect.y + 84))
+
+        pygame.draw.line(surface, (45, 70, 110), (card_rect.x + 28, card_rect.y + 104), (card_rect.right - 28, card_rect.y + 104), 1)
+
+        # Linhas de registros retornados do Django
+        if not self.ranking_data:
+            empty_txt = "NENHUMA SESSÃO SINÁPTICA REGISTRADA ATÉ O MOMENTO."
+            empty_surf = self.doc_font.render(empty_txt, True, (160, 180, 210))
+            surface.blit(empty_surf, (self.sw // 2 - empty_surf.get_width() // 2, card_rect.y + 180))
+        else:
+            row_y = card_rect.y + 114
+            for idx, item in enumerate(self.ranking_data[:10]):
+                # Cores de destaque para os 3 primeiros colocados
+                if idx == 0:
+                    rank_color = (255, 215, 70)  # Ouro
+                elif idx == 1:
+                    rank_color = (210, 220, 235) # Prata
+                elif idx == 2:
+                    rank_color = (225, 145, 95)  # Bronze
+                else:
+                    rank_color = (180, 195, 215)
+
+                # Destaque zebrado sutil nas linhas
+                if idx % 2 == 1:
+                    stripe_surf = pygame.Surface((card_w - 56, 24), pygame.SRCALPHA)
+                    stripe_surf.fill((25, 38, 68, 90))
+                    surface.blit(stripe_surf, (card_rect.x + 28, row_y - 2))
+
+                pos_str = f"#{item.get('rank', idx + 1):02d}"
+                name_str = str(item.get('player_name', 'SUBJECT_003'))[:14]
+                dsi_str = f"{item.get('dsi', 0):,}".replace(",", ".")
+                phase_str = str(item.get('phase_reached', 'Fase I'))[:16]
+                corr_str = f"{item.get('corruption_level', 0)}%"
+                enc_str = str(item.get('entity_encounters', 0))
+                time_str = f"{item.get('play_time_seconds', 0)}s"
+                status_str = str(item.get('participant_status', 'ACCEPTABLE'))[:12]
+
+                # Status color coding
+                status_colors = {
+                    'INTEGRATED': (100, 240, 180),
+                    'ACCEPTABLE': (130, 220, 160),
+                    'UNSTABLE': (255, 200, 80),
+                    'REQUIRES REVIEW': (255, 75, 75)
+                }
+                st_color = status_colors.get(status_str, (180, 200, 225))
+
+                surface.blit(self.small_font.render(pos_str, True, rank_color), (col_x[0], row_y))
+                surface.blit(self.small_font.render(name_str, True, (245, 245, 255)), (col_x[1], row_y))
+                surface.blit(self.small_font.render(dsi_str, True, rank_color), (col_x[2], row_y))
+                surface.blit(self.small_font.render(phase_str, True, (190, 210, 235)), (col_x[3], row_y))
+                surface.blit(self.small_font.render(corr_str, True, (255, 120, 120) if item.get('corruption_level', 0) >= 70 else (190, 210, 235)), (col_x[4], row_y))
+                surface.blit(self.small_font.render(enc_str, True, (200, 215, 235)), (col_x[5], row_y))
+                surface.blit(self.small_font.render(time_str, True, (170, 190, 215)), (col_x[6], row_y))
+                surface.blit(self.small_font.render(status_str, True, st_color), (col_x[7], row_y))
+
+                row_y += 26
+
+        # Instrução de retorno no rodapé
+        back_hint = "[ Pressione qualquer tecla ou clique para voltar ao menu ]"
+        back_surf = self.small_font.render(back_hint, True, (130, 190, 255))
+        surface.blit(back_surf, (self.sw // 2 - back_surf.get_width() // 2, card_rect.bottom - 32))
 
     def _draw_transition(self, surface):
         """Sequência gradual de indução do DREAMSYNC™ e fade para a Fase 1."""
